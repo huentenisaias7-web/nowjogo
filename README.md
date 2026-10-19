@@ -29,12 +29,12 @@ nowjogo/
 
 - Ingreso con validación y selección de avatar.
 - Lecciones visuales con grupos de objetos, patrones y un mini desafío de cinco preguntas por tabla.
-- Tres juegos: reto cronometrado de 60 segundos, memoria de parejas y detective matemático con pistas.
+- Seis juegos: reto cronometrado, memoria de parejas, detective matemático, construcción de grupos, carrera para completar secuencias y una misión para ordenar productos.
 - Seguimiento de puntaje, mejor resultado, tablas dominadas y días de práctica.
 - Insignias por metas alcanzadas.
 - Ensayo de 10 situaciones tipo SIMCE, desbloqueado al dominar las nueve tablas, con navegación entre preguntas y retroalimentación final.
 - Efectos sonoros distintos para aciertos y errores, botones de sonido y guía de voz breve que se puede activar o desactivar. La voz acompaña los cambios de actividad y no lee cada pregunta; las preferencias quedan guardadas en el dispositivo.
-- Animación de puntos y destellos al acertar; las insignias también aparecen con una celebración.
+- Animación de puntos y destellos al acertar; al abrir el progreso aparece una felicitación personalizada con serpentina. Las insignias también se celebran.
 - Interfaz adaptable a pantallas pequeñas, controles táctiles, animaciones y respeto por la preferencia de movimiento reducido del dispositivo.
 
 ## Trabajo colaborativo con GitHub

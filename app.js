@@ -57,6 +57,20 @@
   var detectiveIndex = 0;
   var detectiveScore = 0;
   var detectiveAnswered = false;
+  var builderRound = 0;
+  var builderScore = 0;
+  var builderGroups = 0;
+  var builderTarget = 0;
+  var builderSize = 0;
+  var builderAnswered = false;
+  var jumpQuestions = [];
+  var jumpIndex = 0;
+  var jumpScore = 0;
+  var jumpAnswered = false;
+  var sortItems = [];
+  var sortChoices = [];
+  var sortIndex = 0;
+  var sortMessage = "";
 
   function newState(profile) {
     return { profile: profile, score: 0, streak: 0, lastVisit: "", tables: {}, awards: {}, gameBest: 0, exam: null };
@@ -293,7 +307,7 @@
         home: "¡Hola, " + state.profile.name + "! Elige una aventura para empezar.",
         learn: "Elige una tabla y descubre cómo crecen sus grupos.",
         games: "Escoge un juego. Cada uno practica las tablas de una forma distinta.",
-        progress: "Aquí puedes ver todo lo que has aprendido.",
+        progress: "¡Muy bien, " + state.profile.name + "! Vas avanzando. Sigue así; cada día sabes un poco más.",
         awards: "Mira tus insignias y celebra lo que ya lograste.",
         simce: "Lee cada situación con calma. Puedes revisar las preguntas antes de terminar."
       };
@@ -386,7 +400,7 @@
 
   function renderGames(main) {
     main.innerHTML = heading("JUEGA Y PRACTICA", "¡A jugar! 🎮", "Activa tu mente con un desafío corto y divertido.")
-      + '<section class="game-mode-grid" aria-label="Elige un juego"><article class="game-mode-card"><span class="game-mode-icon">⏱️</span><strong>Atrapa el resultado</strong><p>Reto rápido de 60 segundos. Responde y arma una racha.</p><button class="button button-primary" type="button" data-action="start-game">Comenzar reto →</button></article><article class="game-mode-card"><span class="game-mode-icon">🧠</span><strong>Memoria matemática</strong><p>Encuentra las parejas que unen multiplicación y resultado.</p><label class="memory-toolbar">Elige una tabla <select id="memory-table">' + TABLES.map(function (n) { return '<option value="' + n + '"' + (n === memoryTable ? " selected" : "") + '>Tabla del ' + n + '</option>'; }).join("") + '</select></label><button class="button button-secondary" type="button" data-action="start-memory">Voltear cartas →</button></article><article class="game-mode-card"><span class="game-mode-icon">🔎</span><strong>Detective matemático</strong><p>Lee pistas de la vida diaria y descubre el resultado oculto.</p><button class="button button-secondary" type="button" data-action="start-detective">Resolver pistas →</button></article></section><div id="game-area"></div><div class="section-title"><h2>Una pista para todos los retos</h2></div><div class="pattern-note"><span>🎯</span><div>Multiplicar es formar grupos iguales. Si dudas, suma el mismo número varias veces. ¡No hay apuro: puedes pensar!</div></div>';
+      + '<section class="game-mode-grid" aria-label="Elige un juego"><article class="game-mode-card"><span class="game-mode-icon">⏱️</span><strong>Atrapa el resultado</strong><p>Reto rápido de 60 segundos. Responde y arma una racha.</p><button class="button button-primary" type="button" data-action="start-game">Comenzar reto →</button></article><article class="game-mode-card"><span class="game-mode-icon">🧠</span><strong>Memoria matemática</strong><p>Encuentra las parejas que unen multiplicación y resultado.</p><label class="memory-toolbar">Elige una tabla <select id="memory-table">' + TABLES.map(function (n) { return '<option value="' + n + '"' + (n === memoryTable ? " selected" : "") + '>Tabla del ' + n + '</option>'; }).join("") + '</select></label><button class="button button-secondary" type="button" data-action="start-memory">Voltear cartas →</button></article><article class="game-mode-card"><span class="game-mode-icon">🔎</span><strong>Detective matemático</strong><p>Lee pistas de la vida diaria y descubre el resultado oculto.</p><button class="button button-secondary" type="button" data-action="start-detective">Resolver pistas →</button></article><article class="game-mode-card"><span class="game-mode-icon">🧺</span><strong>Construye grupos</strong><p>Arma conjuntos iguales con fichas y comprueba la multiplicación.</p><button class="button button-secondary" type="button" data-action="start-builder">¡A construir! →</button></article><article class="game-mode-card"><span class="game-mode-icon">🦘</span><strong>Carrera de saltos</strong><p>Completa la secuencia y ayuda al canguro a llegar a la meta.</p><button class="button button-secondary" type="button" data-action="start-jumps">Saltar por la tabla →</button></article><article class="game-mode-card"><span class="game-mode-icon">🚀</span><strong>Ordena la misión</strong><p>Ordena multiplicaciones desde el resultado menor al mayor.</p><button class="button button-secondary" type="button" data-action="start-sort">Despegar →</button></article></section><div id="game-area"></div><div class="section-title"><h2>Una pista para todos los retos</h2></div><div class="pattern-note"><span>🎯</span><div>Multiplicar es formar grupos iguales. Si dudas, suma el mismo número varias veces. ¡No hay apuro: puedes pensar!</div></div>';
   }
   function shuffle(items) {
     for (var i = items.length - 1; i > 0; i -= 1) {
@@ -498,6 +512,118 @@
     if (!detectiveAnswered) return;
     detectiveIndex += 1; detectiveAnswered = false; detectiveHintShown = false; renderDetective();
   }
+  function prepareStandaloneGame() {
+    pauseTimedGame();
+    if (memoryTimeout) { clearTimeout(memoryTimeout); memoryTimeout = null; }
+  }
+  function beginBuilder() {
+    prepareStandaloneGame(); builderRound = 0; builderScore = 0; setBuilderChallenge(); renderBuilder();
+    speakLine("Construye grupos iguales. Usa los botones para agregar o quitar grupos y luego comprueba.");
+  }
+  function setBuilderChallenge() {
+    builderGroups = 0; builderTarget = Math.floor(Math.random() * 6) + 3;
+    builderSize = Math.floor(Math.random() * 9) + 2; builderAnswered = false;
+  }
+  function renderBuilder() {
+    var area = document.getElementById("game-area"); if (!area) return;
+    if (builderRound >= 5) {
+      area.innerHTML = '<section class="end-panel card"><div class="end-emoji">🧺🌟</div><h2>¡Construcción terminada!</h2><p>Construiste correctamente ' + builderScore + ' de 5 desafíos. Cada grupo igual ayuda a entender la multiplicación.</p><div class="mode-score-row"><span class="mode-score-pill">' + builderScore + ' misiones resueltas</span></div><div class="end-actions"><button class="button button-secondary" type="button" data-action="start-builder">Construir otra vez</button><button class="button button-primary" type="button" data-action="back-games">Elegir otro juego</button></div></section>';
+      speakLine("¡Construcción terminada! Resuelves cada vez más multiplicaciones."); return;
+    }
+    var groups = "";
+    for (var g = 0; g < builderGroups; g += 1) {
+      groups += '<div class="build-group" aria-label="Grupo ' + (g + 1) + '">';
+      for (var d = 0; d < builderSize; d += 1) groups += '<span class="build-token" aria-hidden="true">✦</span>';
+      groups += '</div>';
+    }
+    if (!groups) groups = '<div class="build-empty">Toca “Agregar grupo” para empezar ✨</div>';
+    area.innerHTML = '<section class="builder-card card"><div class="quiz-top"><span>MISIÓN ' + (builderRound + 1) + ' DE 5</span><span>🧺 ' + builderScore + ' resueltas</span></div><h2>Construye ' + builderTarget + ' grupos con ' + builderSize + ' fichas en cada uno.</h2><p class="muted">Cada grupo debe tener la misma cantidad. ¿Cuántas fichas habrá en total cuando termines?</p><div class="builder-stage"><div class="builder-groups">' + groups + '</div><div class="builder-total"><span>GRUPOS</span><strong>' + builderGroups + ' / ' + builderTarget + '</strong><span>Fichas en total: ' + (builderGroups * builderSize) + '</span></div></div><div class="builder-controls"><button class="button button-soft" type="button" data-action="builder-minus" aria-label="Quitar un grupo" ' + (builderAnswered || builderGroups === 0 ? "disabled" : "") + '>− Quitar grupo</button><button class="button button-primary" type="button" data-action="builder-plus" ' + (builderAnswered || builderGroups >= builderTarget + 2 ? "disabled" : "") + '>＋ Agregar grupo</button></div>' + (builderAnswered ? '<div class="feedback-box ' + (builderGroups === builderTarget ? "good" : "try-again") + '">' + (builderGroups === builderTarget ? "¡Lo lograste! " + builderTarget + " grupos de " + builderSize + " forman " + (builderTarget * builderSize) + " fichas. ¡Ganaste 5 puntos!" : "Hay " + builderGroups + " grupos. La misión pide " + builderTarget + ". Ajusta la cantidad en el próximo desafío y recuerda: " + builderTarget + " × " + builderSize + " = " + (builderTarget * builderSize) + ".") + '</div><div class="quiz-footer"><span class="muted">' + (builderRound + 1) + ' de 5 construcciones</span><button class="button button-primary" type="button" data-action="next-builder">Siguiente misión →</button></div>' : '<div class="quiz-footer"><span class="muted">Puedes ajustar tus grupos antes de revisar.</span><button class="button button-primary" type="button" data-action="check-builder">Comprobar grupos ✓</button></div>') + '</section>';
+  }
+  function checkBuilder(button) {
+    if (builderAnswered) return;
+    builderAnswered = true;
+    if (builderGroups === builderTarget) { builderScore += 1; playSound("correct"); recordPoints(5, button); }
+    else playSound("incorrect");
+    renderBuilder();
+  }
+  function nextBuilder() {
+    if (!builderAnswered) return;
+    builderRound += 1;
+    if (builderRound < 5) setBuilderChallenge();
+    renderBuilder();
+  }
+  function beginJumps() {
+    prepareStandaloneGame(); jumpIndex = 0; jumpScore = 0;
+    jumpQuestions = [];
+    for (var i = 0; i < 5; i += 1) {
+      var jumpTable = TABLES[Math.floor(Math.random() * TABLES.length)];
+      var start = Math.floor(Math.random() * 5) + 2;
+      var missing = Math.floor(Math.random() * 3) + 1;
+      var sequence = [];
+      for (var step = 0; step < 5; step += 1) sequence.push((start + step) * jumpTable);
+      jumpQuestions.push({ table: jumpTable, missingFactor: start + missing, missingIndex: missing, sequence: sequence, answer: (start + missing) * jumpTable, options: makeOptions((start + missing) * jumpTable, jumpTable, start + missing), selected: null, correct: false });
+    }
+    jumpAnswered = false; renderJumps(); speakLine("Carrera de saltos. Completa el número que falta en la secuencia de la tabla.");
+  }
+  function renderJumps() {
+    var area = document.getElementById("game-area"); if (!area) return;
+    if (jumpIndex >= jumpQuestions.length) {
+      area.innerHTML = '<section class="end-panel card"><div class="end-emoji">🦘🏁</div><h2>¡Llegaste a la meta!</h2><p>Completaste correctamente ' + jumpScore + ' de 5 secuencias. ¡Tu mente dio grandes saltos!</p><div class="end-actions"><button class="button button-secondary" type="button" data-action="start-jumps">Correr otra vez</button><button class="button button-primary" type="button" data-action="back-games">Elegir otro juego</button></div></section>';
+      speakLine("¡Llegaste a la meta! Muy bien por completar la carrera."); return;
+    }
+    var q = jumpQuestions[jumpIndex];
+    var sequence = q.sequence.map(function (value, index) { return '<span class="jump-step ' + (index === q.missingIndex ? "jump-missing" : "") + '">' + (index === q.missingIndex ? (jumpAnswered ? q.answer : "?") : value) + '</span>' + (index < q.sequence.length - 1 ? '<span class="jump-arrow" aria-hidden="true">→</span>' : ""); }).join("");
+    area.innerHTML = '<section class="jump-card card"><div class="quiz-top"><span>CARRERA ' + (jumpIndex + 1) + ' DE 5</span><span>🏁 ' + jumpScore + ' aciertos</span></div><div class="jump-mascot" aria-hidden="true">🦘</div><h2>¿Qué número sigue en los saltos de ' + q.table + '?</h2><div class="jump-sequence" aria-label="Secuencia de la tabla del ' + q.table + '">' + sequence + '</div><div class="answer-grid jump-answers">' + q.options.map(function (value) {
+      var cls = jumpAnswered && value === q.answer ? " correct" : jumpAnswered && value === q.selected ? " wrong" : "";
+      return '<button class="answer-option' + cls + '" type="button" data-jump-answer="' + value + '" ' + (jumpAnswered ? "disabled" : "") + '>' + value + '</button>';
+    }).join("") + '</div><div class="feedback-box ' + (jumpAnswered ? (q.correct ? "good" : "try-again") : "") + '">' + (jumpAnswered ? (q.correct ? "¡Salto perfecto! Ganaste 5 puntos. La tabla avanza de " + q.table + " en " + q.table + "." : "¡Casi! La respuesta es " + q.answer + ". Cuenta saltando de " + q.table + " en " + q.table + ".") : "Elige el número que aterriza en el espacio vacío.") + '</div>' + (jumpAnswered ? '<div class="quiz-footer"><span class="muted">' + (jumpIndex + 1) + ' de 5 carreras</span><button class="button button-primary" type="button" data-action="next-jump">Siguiente salto →</button></div>' : "") + '</section>';
+  }
+  function answerJump(value, button) {
+    if (jumpAnswered) return;
+    stopSpeech(); var q = jumpQuestions[jumpIndex]; q.selected = value; q.correct = value === q.answer; jumpAnswered = true;
+    if (q.correct) { jumpScore += 1; playSound("correct"); recordPoints(5, button); } else playSound("incorrect");
+    renderJumps();
+  }
+  function nextJump() {
+    if (!jumpAnswered) return;
+    jumpIndex += 1; jumpAnswered = false; renderJumps();
+  }
+  var SORT_POOL = [
+    { a: 2, b: 2 }, { a: 2, b: 3 }, { a: 2, b: 4 }, { a: 3, b: 3 },
+    { a: 2, b: 5 }, { a: 3, b: 4 }, { a: 2, b: 7 }, { a: 3, b: 5 },
+    { a: 4, b: 4 }, { a: 2, b: 9 }, { a: 4, b: 5 }
+  ];
+  function beginSort() {
+    prepareStandaloneGame();
+    var chosen = shuffle(SORT_POOL.slice()).slice(0, 4).map(function (item, index) { return { id: index, a: item.a, b: item.b, product: item.a * item.b }; });
+    sortItems = chosen.slice().sort(function (a, b) { return a.product - b.product; });
+    sortChoices = shuffle(chosen.slice()); sortIndex = 0; sortMessage = ""; renderSort();
+    speakLine("Ordena la misión. Elige primero la multiplicación con el resultado menor y sigue hasta el mayor.");
+  }
+  function renderSort() {
+    var area = document.getElementById("game-area"); if (!area) return;
+    if (sortIndex >= sortItems.length) {
+      area.innerHTML = '<section class="end-panel card"><div class="end-emoji">🚀🌟</div><h2>¡Misión en órbita!</h2><p>Ordenaste cuatro multiplicaciones del resultado menor al mayor. ¡Ganaste puntos en cada paso!</p><div class="end-actions"><button class="button button-secondary" type="button" data-action="start-sort">Jugar otra misión</button><button class="button button-primary" type="button" data-action="back-games">Elegir otro juego</button></div></section>';
+      speakLine("¡Misión en órbita! Tu nave llegó al destino gracias a tu estrategia."); return;
+    }
+    var picked = sortItems.slice(0, sortIndex).map(function (item, index) { return '<span class="sort-chip">' + (index + 1) + ". " + item.a + " × " + item.b + " = " + item.product + '</span>'; }).join("");
+    area.innerHTML = '<section class="sort-card card"><div class="quiz-top"><span>MISIÓN DE ORDEN</span><span>🚀 ' + sortIndex + ' / 4 correctas</span></div><h2>Elige primero el resultado menor</h2><p class="muted">Calcula cada multiplicación. Después ordenaremos las cuatro respuestas de menor a mayor.</p><div class="sort-progress" aria-label="Multiplicaciones ordenadas">' + picked + (sortIndex < 4 ? '<span class="sort-placeholder">' + (sortIndex + 1) + '. ¿Cuál sigue?</span>' : "") + '</div><div class="sort-options">' + sortChoices.filter(function (item) { return sortItems.slice(0, sortIndex).every(function (done) { return done.id !== item.id; }); }).map(function (item) { return '<button class="sort-option" type="button" data-sort-item="' + item.id + '"><span>' + item.a + ' × ' + item.b + '</span><strong>?</strong></button>'; }).join("") + '</div><div class="feedback-box ' + (sortMessage.indexOf("¡Correcto") === 0 ? "good" : sortMessage ? "try-again" : "") + '" aria-live="polite">' + (sortMessage || "Selecciona una tarjeta para continuar la secuencia.") + '</div></section>';
+  }
+  function chooseSortItem(id, button) {
+    if (sortIndex >= sortItems.length) return;
+    var selected = sortChoices.find(function (item) { return item.id === id; });
+    if (!selected) return;
+    if (selected.id === sortItems[sortIndex].id) {
+      sortIndex += 1; sortMessage = "¡Correcto! Ese era el resultado menor que faltaba. Ganaste 2 puntos.";
+      recordPoints(2, button);
+      if (sortIndex === sortItems.length) { recordPoints(3, button); playSound("achievement"); }
+      else playSound("correct");
+    } else {
+      sortMessage = "Todavía hay un resultado menor. Prueba calculando y comparando las multiplicaciones.";
+      playSound("incorrect");
+    }
+    renderSort();
+  }
   function newRound() {
     if (!gameInterval || gameTime <= 0) return;
     var a = TABLES[Math.floor(Math.random() * TABLES.length)], b = Math.floor(Math.random() * 9) + 2, correct = a * b;
@@ -564,7 +690,27 @@
       return '<div class="card" style="padding:17px 19px;margin-bottom:10px"><div class="progress-label"><span>Tabla del ' + n + (record.complete ? " ✓" : "") + '</span><span>' + (record.complete ? "Dominada" : record.attempts ? "Mejor resultado " + record.best + " / 5" : "Por comenzar") + '</span></div><div class="progress-track"><span style="width:' + percentage + '%"></span></div><button class="back-link" type="button" style="margin:10px 0 0;padding:0;font-size:.77rem" data-table="' + n + '">' + (record.attempts ? "Practicar de nuevo →" : "Empezar esta tabla →") + '</button></div>';
     }).join("");
     main.innerHTML = heading("TU CAMINO", "¡Mira cuánto avanzas! 📈", "Cada práctica cuenta. Repite las tablas para superar tu mejor resultado.")
-      + '<div class="stats-row"><div class="stat-card card"><span class="stat-icon">⭐</span><div><strong>' + state.score + '</strong><span>Puntos totales</span></div></div><div class="stat-card card"><span class="stat-icon">📚</span><div><strong>' + count + ' / 9</strong><span>Tablas dominadas</span></div></div><div class="stat-card card"><span class="stat-icon">🏅</span><div><strong>' + Object.keys(state.awards).length + '</strong><span>Logros ganados</span></div></div></div><div class="section-title"><h2>Avance por tabla</h2><span>' + Math.round(count / 9 * 100) + '% completado</span></div>' + rows;
+      + '<section class="progress-congrats card" aria-label="Felicitaciones"><span class="congrats-spark" aria-hidden="true">✨</span><span class="congrats-avatar" aria-hidden="true">' + esc(state.profile.avatar || "🦊") + '</span><div><span class="kicker">¡VAS MUY BIEN!</span><h2>¡Sigue así, ' + esc(state.profile.name) + '!</h2><p>Cada práctica te hace más fuerte. Ya reuniste <strong>' + state.score + ' puntos</strong> y dominaste <strong>' + count + ' de 9 tablas</strong>. ¡Tu esfuerzo merece una celebración!</p></div><span class="congrats-star" aria-hidden="true">🌟</span></section><div class="stats-row"><div class="stat-card card"><span class="stat-icon">⭐</span><div><strong>' + state.score + '</strong><span>Puntos totales</span></div></div><div class="stat-card card"><span class="stat-icon">📚</span><div><strong>' + count + ' / 9</strong><span>Tablas dominadas</span></div></div><div class="stat-card card"><span class="stat-icon">🏅</span><div><strong>' + Object.keys(state.awards).length + '</strong><span>Logros ganados</span></div></div></div><div class="section-title"><h2>Avance por tabla</h2><span>' + Math.round(count / 9 * 100) + '% completado</span></div>' + rows;
+    launchProgressConfetti(main);
+  }
+  function launchProgressConfetti(main) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.querySelectorAll(".confetti-rain").forEach(function (oldRain) { oldRain.remove(); });
+    var rain = document.createElement("div");
+    rain.className = "confetti-rain"; rain.setAttribute("aria-hidden", "true");
+    var colors = ["#ffca5c", "#ff7f87", "#7a70ee", "#48c99a", "#53b9e8", "#fa9c55"];
+    for (var i = 0; i < 30; i += 1) {
+      var piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.left = (Math.random() * 100) + "%";
+      piece.style.backgroundColor = colors[i % colors.length];
+      piece.style.animationDelay = (Math.random() * .8) + "s";
+      piece.style.setProperty("--drift", (Math.random() * 150 - 75) + "px");
+      piece.style.setProperty("--spin", (Math.random() * 900 + 360) + "deg");
+      rain.appendChild(piece);
+    }
+    document.body.appendChild(rain);
+    window.setTimeout(function () { rain.remove(); }, 3300);
   }
   var AWARDS = [
     { id: "first10", icon: "⭐", title: "Primeros 10 puntos", text: "Suma 10 puntos en tus actividades." },
@@ -628,7 +774,7 @@
 
   document.addEventListener("click", function (event) {
     var pressedButton = event.target.closest("button");
-    if (pressedButton && !pressedButton.disabled && !pressedButton.hasAttribute("data-lesson-answer") && !pressedButton.hasAttribute("data-game-answer") && !pressedButton.hasAttribute("data-detective-answer") && !pressedButton.hasAttribute("data-memory-card")) playSound("tap");
+    if (pressedButton && !pressedButton.disabled && !pressedButton.hasAttribute("data-lesson-answer") && !pressedButton.hasAttribute("data-game-answer") && !pressedButton.hasAttribute("data-detective-answer") && !pressedButton.hasAttribute("data-memory-card") && !pressedButton.hasAttribute("data-jump-answer") && !pressedButton.hasAttribute("data-sort-item")) playSound("tap");
     var audioToggle = event.target.closest("[data-audio-toggle]");
     if (audioToggle) {
       var setting = audioToggle.getAttribute("data-audio-toggle");
@@ -657,6 +803,10 @@
     if (memoryButton) { flipMemoryCard(Number(memoryButton.getAttribute("data-memory-card"))); return; }
     var detectiveButton = event.target.closest("[data-detective-answer]");
     if (detectiveButton) { answerDetective(Number(detectiveButton.getAttribute("data-detective-answer")), detectiveButton); return; }
+    var jumpButton = event.target.closest("[data-jump-answer]");
+    if (jumpButton) { answerJump(Number(jumpButton.getAttribute("data-jump-answer")), jumpButton); return; }
+    var sortButton = event.target.closest("[data-sort-item]");
+    if (sortButton) { chooseSortItem(Number(sortButton.getAttribute("data-sort-item")), sortButton); return; }
     var examNumber = event.target.closest("[data-exam-index]");
     if (examNumber) { examIndex = Number(examNumber.getAttribute("data-exam-index")); renderSimce(document.getElementById("main-content")); return; }
     var examAnswer = event.target.closest("[data-exam-answer]");
@@ -673,6 +823,14 @@
     else if (action === "start-game") beginGame();
     else if (action === "start-memory") beginMemory();
     else if (action === "start-detective") beginDetective();
+    else if (action === "start-builder") beginBuilder();
+    else if (action === "builder-minus") { builderGroups = Math.max(0, builderGroups - 1); renderBuilder(); }
+    else if (action === "builder-plus") { builderGroups = Math.min(builderTarget + 2, builderGroups + 1); renderBuilder(); }
+    else if (action === "check-builder") checkBuilder(actionButton);
+    else if (action === "next-builder") nextBuilder();
+    else if (action === "start-jumps") beginJumps();
+    else if (action === "next-jump") nextJump();
+    else if (action === "start-sort") beginSort();
     else if (action === "hint-detective") {
       detectiveHintShown = !detectiveHintShown;
       if (detectiveHintShown) speakLine(detectiveQuestions[detectiveIndex].hint); else stopSpeech();
