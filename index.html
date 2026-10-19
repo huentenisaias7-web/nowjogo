@@ -4,37 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fff9ed">
-  <title>Mis Tablas | Aprende jugando</title>
-  <link rel="stylesheet" href="Sistema/CSS/styles.css">
-  <script src="Sistema/JS/app.js" defer></script>
+  <title>Mis Tablas | Mi aventura</title>
+  <link rel="stylesheet" href="CSS/styles.css">
+  <script src="JS/app.js" defer></script>
 </head>
-<body class="login-page" data-page="login">
-  <main class="login-layout">
-    <section class="login-art" aria-label="Bienvenida a Mis Tablas">
-      <a class="brand brand-light" href="#" aria-label="Mis Tablas, inicio"><span class="brand-mark">×</span><span>mis tablas<span class="brand-dot">.</span></span></a>
-      <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-sun">✦</div>
-      <div class="art-copy"><span class="eyebrow">¡Hola, explorador/a!</span><h1>Las matemáticas<br>son una aventura.</h1><p>Practica, juega y descubre lo lejos que puedes llegar.</p></div>
-      <div class="math-cloud cloud-one">3 × 4 <strong>12</strong></div><div class="math-cloud cloud-two">2 × 8 <strong>16</strong></div>
-      <div class="hero-mascot" aria-hidden="true"><div class="mascot-face"><span class="mascot-eye"></span><span class="mascot-eye"></span><span class="mascot-smile"></span></div><span class="mascot-spark spark-a">✦</span><span class="mascot-spark spark-b">✧</span></div>
-      <div class="art-footer">Un paso a la vez. ¡Tú puedes! <span>♥</span></div>
-    </section>
-    <section class="login-panel">
-      <div class="login-card">
-        <div class="mobile-brand brand"><span class="brand-mark">×</span><span>mis tablas<span class="brand-dot">.</span></span></div>
-        <span class="eyebrow eyebrow-purple">TU ESPACIO DE APRENDIZAJE</span><h2>¡Comencemos!</h2><p class="muted">Escribe tu nombre y elige tu compañero de aventuras.</p>
-        <form id="login-form" novalidate>
-          <label class="field-label" for="student-name">¿Cómo te llamas?</label>
-          <div class="input-wrap"><span aria-hidden="true">✎</span><input id="student-name" name="name" maxlength="24" autocomplete="given-name" placeholder="Tu nombre" required></div>
-          <p class="field-error" id="name-error" role="alert"></p>
-          <fieldset class="avatar-field"><legend class="field-label">Elige tu avatar</legend><div class="avatar-picker" role="radiogroup" aria-label="Elige un avatar">
-            <button type="button" class="avatar-option selected" data-avatar="🦊" aria-label="Zorrito" aria-pressed="true">🦊</button><button type="button" class="avatar-option" data-avatar="🐼" aria-label="Panda" aria-pressed="false">🐼</button><button type="button" class="avatar-option" data-avatar="🐸" aria-label="Ranita" aria-pressed="false">🐸</button><button type="button" class="avatar-option" data-avatar="🦄" aria-label="Unicornio" aria-pressed="false">🦄</button><button type="button" class="avatar-option" data-avatar="🐯" aria-label="Tigre" aria-pressed="false">🐯</button><button type="button" class="avatar-option" data-avatar="🐧" aria-label="Pingüino" aria-pressed="false">🐧</button>
-          </div></fieldset>
-          <button class="button button-primary button-wide button-enter" type="submit">Entrar a mi aventura <span>→</span></button>
-          <p class="login-note"><span>✦</span> Tu avance se guarda en este dispositivo.</p>
-        </form>
+<body class="app-page" data-page="app">
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" data-nav="home" aria-label="Ir al inicio"><span class="brand-mark">×</span><span>mis tablas<span class="brand-dot">.</span></span></a>
+      <div class="topbar-right">
+        <div class="streak-pill"><span>🔥</span><strong id="header-streak">0</strong><span class="streak-label">días</span></div>
+        <div class="student-chip"><span class="student-avatar" id="header-avatar">🦊</span><span id="header-name">Explorador</span></div>
+        <button class="icon-button audio-control" id="sound-toggle" type="button" data-audio-toggle="sound" aria-label="Desactivar sonidos" aria-pressed="true" title="Sonidos activados">🔊</button>
+        <button class="icon-button audio-control" id="voice-toggle" type="button" data-audio-toggle="voice" aria-label="Desactivar guía de voz" aria-pressed="true" title="Guía de voz activada">🗣️</button>
+        <button class="icon-button" id="logout-button" type="button" aria-label="Cambiar estudiante" title="Cambiar estudiante">↪</button>
       </div>
-      <div class="login-bottom"><span>Aprender también puede ser divertido.</span><span>Hecho para grandes exploradores <b>♥</b></span></div>
-    </section>
-  </main>
+    </header>
+    <div class="app-body">
+      <aside class="sidebar" aria-label="Navegación principal"><nav id="side-nav"></nav><div class="sidebar-tip"><span>💡</span><p>¡Equivocarse es parte de aprender!</p></div><div class="sidebar-credit">MIS TABLAS <span>•</span> 4° BÁSICO</div></aside>
+      <main class="main-content" id="main-content" tabindex="-1"></main>
+    </div>
+    <nav id="mobile-nav" class="mobile-nav" aria-label="Navegación móvil"></nav>
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+  </div>
 </body>
 </html>
